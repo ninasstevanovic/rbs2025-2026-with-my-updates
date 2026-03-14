@@ -58,9 +58,9 @@
 
         <tbody id="citiesTableContent">
         <tr th:each="city : ${cities}">
-            <td th:utext="${city.id}"></td>
-            <td th:utext="${city.name}"></td>
-            <td th:utext="${city.countryName}"></td>
+            <td th:text="${city.id}"></td>
+            <td th:text="${city.name}"></td>
+            <td th:text="${city.countryName}"></td>
         </tr>
         </tbody>
     </table>

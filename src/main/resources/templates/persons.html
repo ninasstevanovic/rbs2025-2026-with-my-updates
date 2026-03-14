@@ -36,13 +36,17 @@
             <td th:text="${person.firstName}"></td>
             <td th:text="${person.lastName}"></td>
             <td th:text="${person.email}"></td>
-            <td><a th:href="@{/persons/{id}(id=${person.id})}">View profile</a></td>
+            <td><a th:href="@{/persons/{id}(id=${person.id})}" sec:authorize="hasAuthority('VIEW_PERSON')">View
+                profile</a></td>
         </tr>
         </tbody>
     </table>
 
-    <script>
-        window.addEventListener('load', function() {
+    <script th:inline="javascript">
+        const canViewPerson = [[${#authorization.expression('hasAuthority(''VIEW_PERSON'')')}]];
+    </script>
+    <script sec:authorize="hasAuthority('VIEW_PERSONS_LIST')">
+        window.addEventListener('load', function () {
             let search = function () {
                 const searchTerm = document.getElementById("searchInput").value;
 
@@ -66,9 +70,11 @@
                             tdElement = document.createElement("td");
                             tdElement.innerHTML = person.email;
                             tableRowElement.appendChild(tdElement);
-                            tdElement = document.createElement("td");
-                            tdElement.innerHTML = '<a href="/persons/' + person.id + '">View profile</a>';
-                            tableRowElement.appendChild(tdElement);
+                            if (canViewPerson) {
+                                tdElement = document.createElement("td");
+                                tdElement.innerHTML = '<a href="/persons/' + person.id + '">View profile</a>';
+                                tableRowElement.appendChild(tdElement);
+                            }
 
                             tableContent.appendChild(tableRowElement);
                         });

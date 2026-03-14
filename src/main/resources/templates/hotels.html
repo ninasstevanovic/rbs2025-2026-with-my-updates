@@ -47,7 +47,7 @@
             </tbody>
         </table>
 
-        <a href="/hotels/new-hotel">Add Hotel</a>
+        <a href="/hotels/new-hotel" sec:authorize="hasAuthority('CREATE_HOTEL')">Add Hotel</a>
     </div>
 
     <template id="row-template">

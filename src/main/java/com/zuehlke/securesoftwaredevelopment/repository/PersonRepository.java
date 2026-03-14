@@ -34,12 +34,13 @@ public class PersonRepository {
                 personList.add(createPersonFromResultSet(rs));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Database error while fetching all people", e);
+            throw new RuntimeException("Failed to fetch people", e);
         }
         return personList;
     }
 
-    public List<Person> search(String searchTerm) throws SQLException {
+    public List<Person> search(String searchTerm) {
         List<Person> personList = new ArrayList<>();
         String query = "SELECT id, firstName, lastName, email FROM persons WHERE UPPER(firstName) like UPPER('%" + searchTerm + "%')" +
                 " OR UPPER(lastName) like UPPER('%" + searchTerm + "%')";
@@ -49,6 +50,9 @@ public class PersonRepository {
             while (rs.next()) {
                 personList.add(createPersonFromResultSet(rs));
             }
+        } catch (SQLException e) {
+            LOG.error("Database error while fetching people by term. searchTerm={}", searchTerm, e);
+            throw new RuntimeException("Failed to fetch people", e);
         }
         return personList;
     }
@@ -58,24 +62,34 @@ public class PersonRepository {
         try (Connection connection = dataSource.getConnection();
              Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(query)) {
-            while (rs.next()) {
+            if (rs.next()) {
                 return createPersonFromResultSet(rs);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
 
-        return null;
+            LOG.warn("Person not found. personId={}", personId);
+            return null;
+        } catch (SQLException e) {
+            LOG.error("Database error while fetching person by id. personId={}", personId, e);
+            throw new RuntimeException("Failed to fetch person by id", e);
+        }
     }
 
     public void delete(int personId) {
         String query = "DELETE FROM persons WHERE id = " + personId;
         try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-        ) {
-            statement.executeUpdate(query);
+             Statement statement = connection.createStatement()) {
+
+            int rows = statement.executeUpdate(query);
+            if (rows == 0) {
+                LOG.warn("Attempt to delete non-existing person. personId={}", personId);
+                return;
+            }
+
+            auditLogger.audit("Deleted person id=" + personId);
+            LOG.info("Person deleted successfully. personId={}", personId);
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Database error while deleting person. personId={}", personId, e);
+            throw new RuntimeException("Failed to delete person", e);
         }
     }
 
@@ -89,6 +103,10 @@ public class PersonRepository {
 
     public void update(Person personUpdate) {
         Person personFromDb = get(personUpdate.getId());
+        if (personFromDb == null) {
+            LOG.warn("Attempt to update non-existing person. personId={}", personUpdate.getId());
+            return;
+        }
         String query = "UPDATE persons SET firstName = ?, lastName = '" + personUpdate.getLastName() + "', email = ? where id = " + personUpdate.getId();
 
         try (Connection connection = dataSource.getConnection();
@@ -98,9 +116,26 @@ public class PersonRepository {
             String email = personUpdate.getEmail() != null ? personUpdate.getEmail() : personFromDb.getEmail();
             statement.setString(1, firstName);
             statement.setString(2, email);
-            statement.executeUpdate();
+            int rows = statement.executeUpdate();
+            if (rows == 0) {
+                LOG.warn("Person update affected no rows. personId={}", personUpdate.getId());
+                return;
+            }
+
+            auditLogger.audit(
+                    "Updated person id=" + personUpdate.getId()
+                            + ", oldFirstName=" + personFromDb.getFirstName()
+                            + ", newFirstName=" + firstName
+                            + ", oldLastName=" + personFromDb.getLastName()
+                            + ", newLastName=" + personUpdate.getLastName()
+                            + ", oldEmail=" + personFromDb.getEmail()
+                            + ", newEmail=" + email
+            );
+
+            LOG.info("Person updated successfully. personId={}", personUpdate.getId());
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Database error while updating person. personId={}", personUpdate.getId(), e);
+            throw new RuntimeException("Failed to update person", e);
         }
     }
 }

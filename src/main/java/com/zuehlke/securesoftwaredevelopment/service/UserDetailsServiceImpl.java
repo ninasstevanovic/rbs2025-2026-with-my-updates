@@ -29,19 +29,31 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public User loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findUser(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("Username not found");
-        }
+        try {
+            User user = userRepository.findUser(username);
+            if (user == null) {
+                LOG.warn("Authentication failed because username was not found. username={}", username);
+                throw new UsernameNotFoundException("Username not found");
+            }
 
-        List<Permission> permissions = permissionService.get(user.getId());
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        for (Permission permission : permissions) {
-            authorities.add(new SimpleGrantedAuthority(permission.getName()));
-        }
-        user.setAuthorities(authorities);
+            List<Permission> permissions = permissionService.get(user.getId());
+            List<GrantedAuthority> authorities = new ArrayList<>();
 
-        LOG.info("User '{}' has authorities '{}'", username, user.getAuthorities());
-        return user;
+            for (Permission permission : permissions) {
+                authorities.add(new SimpleGrantedAuthority(permission.getName()));
+            }
+
+            user.setAuthorities(authorities);
+
+            LOG.info("User details loaded successfully. userId={}, username={}, authoritiesCount={}",
+                    user.getId(), username, authorities.size());
+
+            return user;
+        } catch (UsernameNotFoundException e) {
+            throw e;
+        } catch (RuntimeException e) {
+            LOG.error("Unexpected error while loading user details. username={}", username, e);
+            throw e;
+        }
     }
 }

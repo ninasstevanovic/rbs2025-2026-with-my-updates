@@ -12,7 +12,8 @@
 <div layout:fragment="content">
     <h1>Profile</h1>
     <div class="row">
-        <form method="POST" action="/update-person" class="col-5">
+        <form method="POST" action="/update-person" class="col-5"
+              th:if="${@personSecurityService.canUpdatePerson(person.id, #authentication)}">
             <div class="form-group">
                 <label for="username">Username</label>
                 <input type="text" name="username" class="form-control" id="username" th:value="${username}">

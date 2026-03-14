@@ -51,47 +51,47 @@
         </tbody>
     </table>
 
-    <hr class="mt-4 mb-4"/>
+    <hr class="mt-4 mb-4" th:if="${isAdmin}"/>
+    <div th:if="${isAdmin}">
+        <h2>All reservations</h2>
 
-    <h2>All reservations</h2>
+        <table class="table table-striped" th:if="${allReservations != null && !#lists.isEmpty(allReservations)}">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>User</th>
+                <th>Hotel</th>
+                <th>Room type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Rooms</th>
+                <th>Guests</th>
+                <th>Total price</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${allReservations}">
+                <td th:utext="${r.id}"></td>
+                <td th:utext="${r.userId}"></td>
+                <td th:utext="${r.hotelName}"></td>
+                <td th:utext="${r.roomTypeName}"></td>
+                <td th:utext="${r.startDate}"></td>
+                <td th:utext="${r.endDate}"></td>
+                <td th:utext="${r.roomsCount}"></td>
+                <td th:utext="${r.guestsCount}"></td>
+                <td th:utext="${r.totalPrice}"></td>
 
-    <table class="table table-striped" th:if="${allReservations != null && !#lists.isEmpty(allReservations)}">
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>User</th>
-            <th>Hotel</th>
-            <th>Room type</th>
-            <th>From</th>
-            <th>To</th>
-            <th>Rooms</th>
-            <th>Guests</th>
-            <th>Total price</th>
-            <th></th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="r : ${allReservations}">
-            <td th:utext="${r.id}"></td>
-            <td th:utext="${r.userId}"></td>
-            <td th:utext="${r.hotelName}"></td>
-            <td th:utext="${r.roomTypeName}"></td>
-            <td th:utext="${r.startDate}"></td>
-            <td th:utext="${r.endDate}"></td>
-            <td th:utext="${r.roomsCount}"></td>
-            <td th:utext="${r.guestsCount}"></td>
-            <td th:utext="${r.totalPrice}"></td>
-
-            <td>
-                <form th:action="@{/reservations/delete(id=${r.id})}" method="post"
-                      onsubmit="return confirm('Delete this reservation?');">
-                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-
+                <td>
+                    <form th:action="@{/reservations/delete(id=${r.id})}" method="post"
+                          onsubmit="return confirm('Delete this reservation?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 </body>
 </html>

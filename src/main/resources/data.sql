@@ -81,10 +81,62 @@ values (1, 3, 5),
        (1, 1, 5),
        (1, 2, 4);
 
+insert into permissions(id, name)
+values (1, 'VIEW_HOTEL_LIST'),
+       (2, 'VIEW_HOTEL'),
+       (3, 'CREATE_COUNTRY'),
+       (4, 'CREATE_CITY'),
+       (5, 'CREATE_HOTEL'),
+       (6, 'VIEW_PERSONS_LIST'),
+       (7, 'VIEW_PERSON'),
+       (8, 'UPDATE_PERSON'),
+       (9, 'VIEW_MY_PROFILE'),
+       (10, 'RATE_HOTEL'),
+       (11, 'CREATE_RESERVATION'),
+       (12, 'VIEW_RESERVATION');
+
+-- ADMIN -> sve
+insert into role_to_permissions(roleId, permissionId)
+values (1, 1),
+       (1, 2),
+       (1, 3),
+       (1, 4),
+       (1, 5),
+       (1, 6),
+       (1, 7),
+       (1, 8),
+       (1, 9),
+       (1, 10),
+       (1, 11),
+       (1, 12);
+
+-- MANAGER
+insert into role_to_permissions(roleId, permissionId)
+values (2, 1), -- VIEW_HOTEL_LIST
+       (2, 2), -- VIEW_HOTEL
+       (2, 5), -- CREATE_HOTEL
+       (2, 6), -- VIEW_PERSONS_LIST
+       (2, 8), -- UPDATE_PERSON
+       (2, 9), -- VIEW_MY_PROFILE
+       (2, 11);-- CREATE_RESERVATION
+
+-- CUSTOMER
+insert into role_to_permissions(roleId, permissionId)
+values (3, 1),  -- VIEW_HOTEL_LIST
+       (3, 2),  -- VIEW_HOTEL
+       (3, 8),  -- UPDATE_PERSON
+       (3, 9),  -- VIEW_MY_PROFILE
+       (3, 10), -- RATE_HOTEL
+       (3, 11), -- CREATE_RESERVATION
+       (3, 12); -- VIEW_RESERVATION
+
 insert into roles(id, name)
 values (1, 'ADMIN'),
-       (2, 'MANAGER');
+       (2, 'MANAGER'),
+       (3, 'CUSTOMER');
 
 insert into user_to_roles(userId, roleId)
 values (4, 1),
-       (3, 2);
+       (3, 2),
+       (1, 3),
+       (2, 3);

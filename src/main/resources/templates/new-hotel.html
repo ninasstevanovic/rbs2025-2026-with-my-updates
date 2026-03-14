@@ -67,10 +67,10 @@
 
         <tbody id="hotelsTableContent">
         <tr th:each="hotel : ${hotels}">
-            <td th:utext="${hotel.id}"></td>
-            <td th:utext="${hotel.name}"></td>
-            <td th:utext="${hotel.cityName}"></td>
-            <td th:utext="${hotel.address}"></td>
+            <td th:text="${hotel.id}"></td>
+            <td th:text="${hotel.name}"></td>
+            <td th:text="${hotel.cityName}"></td>
+            <td th:text="${hotel.address}"></td>
         </tr>
         </tbody>
     </table>

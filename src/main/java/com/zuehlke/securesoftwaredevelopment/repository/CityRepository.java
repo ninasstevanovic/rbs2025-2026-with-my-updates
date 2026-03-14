@@ -24,9 +24,7 @@ public class CityRepository {
     public List<City> getAll() {
         List<City> cityList = new ArrayList<>();
         String query = "SELECT c.id, c.countryId, c.name, ct.name FROM city as c, country as ct WHERE ct.id = c.countryId";
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery(query)) {
+        try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query)) {
             while (rs.next()) {
                 int id = rs.getInt(1);
                 int countryId = rs.getInt(2);
@@ -36,75 +34,88 @@ public class CityRepository {
                 cityList.add(new City(id, countryId, name, countryName));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Database error while fetching all cities", e);
+            throw new RuntimeException("Failed to fetch cities", e);
         }
 
         return cityList;
     }
 
     public City findById(Integer cityId) {
-        String query = "SELECT c.id, c.countryId, c.name FROM city as c WHERE c.id = " + cityId;
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery(query)) {
-            if (rs.next()) {
-                int id = rs.getInt(1);
-                int countryId = rs.getInt(2);
-                String name = rs.getString(3);
-                return new City(id, countryId, name);
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+        String query = "SELECT c.id, c.countryId, c.name FROM city as c WHERE c.id = ?";
+        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(query)) {
 
-        return null;
+            statement.setInt(1, cityId);
+            try (ResultSet rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    int id = rs.getInt(1);
+                    int countryId = rs.getInt(2);
+                    String name = rs.getString(3);
+                    return new City(id, countryId, name);
+                }
+            }
+
+            LOG.warn("City not found. cityId={}", cityId);
+            return null;
+        } catch (SQLException e) {
+            LOG.error("Database error while fetching city by id. cityId={}", cityId, e);
+            throw new RuntimeException("Failed to fetch city by id", e);
+        }
     }
 
     public List<City> findByName(String name) {
-        String query = "SELECT c.id, c.countryId, c.name FROM city as c WHERE c.name like '" + name + "'";
-        try (Connection connection = dataSource.getConnection();
-             Statement statement = connection.createStatement();
-             ResultSet rs = statement.executeQuery(query)) {
-            List<City> cityList = new ArrayList<>();
-            while (rs.next()) {
-                int id = rs.getInt(1);
-                int countryId = rs.getInt(2);
+        String query = "SELECT c.id, c.countryId, c.name FROM city c WHERE c.name = ?";
 
-                cityList.add(new City(id, countryId, name));
+        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(query)) {
+
+            statement.setString(1, name);
+
+            try (ResultSet rs = statement.executeQuery()) {
+                List<City> cityList = new ArrayList<>();
+                while (rs.next()) {
+                    int id = rs.getInt(1);
+                    int countryId = rs.getInt(2);
+                    String cityName = rs.getString(3);
+
+                    cityList.add(new City(id, countryId, cityName));
+                }
+                return cityList;
             }
-
-            return cityList;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Database error while searching city by name. name={}", name, e);
+            throw new RuntimeException("Failed to search city by name", e);
         }
-
-        return null;
     }
 
     public long create(City city) {
-        String query = "INSERT INTO city(countryid, name) VALUES(?, '" + city.getName() + "')";
+        String query = "INSERT INTO city(countryid, name) VALUES(?, ?)";
         long id = -1;
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
-        ) {
+        try (Connection connection = dataSource.getConnection(); PreparedStatement statement = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+
             statement.setInt(1, city.getCountryId());
+            statement.setString(2, city.getName());
+
             int rows = statement.executeUpdate();
 
             if (rows == 0) {
+                LOG.warn("City creation affected no rows. cityName={}, countryId={}", city.getName(), city.getCountryId());
                 throw new SQLException("Creating city failed, no rows affected.");
             }
 
-            ResultSet generatedKeys = statement.getGeneratedKeys();
-            if (generatedKeys.next()) {
-                id = generatedKeys.getLong(1);
+            try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    id = generatedKeys.getLong(1);
+                }
             }
+
+            auditLogger.audit("Created city id=" + id + ", name=" + city.getName() + ", countryId=" + city.getCountryId());
+            LOG.info("City created successfully. id={}, name={}, countryId={}", id, city.getName(), city.getCountryId());
 
             return id;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Database error while creating city. cityName={}, countryId={}", city.getName(), city.getCountryId(), e);
+            throw new RuntimeException("Failed to create city", e);
         }
-
-        return id;
     }
 }

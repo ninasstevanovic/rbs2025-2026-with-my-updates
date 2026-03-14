@@ -35,10 +35,9 @@ public class CountryRepository {
 
             return countryList;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Database error while fetching all countries", e);
+            throw new RuntimeException("Failed to fetch countries", e);
         }
-
-        return null;
     }
 
     public Country findById(Integer countryId) {
@@ -51,11 +50,13 @@ public class CountryRepository {
                 String name = rs.getString(2);
                 return new Country(id, name);
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
 
-        return null;
+            LOG.warn("City not found. countryId={}", countryId);
+            return null;
+        } catch (SQLException e) {
+            LOG.error("Database error while fetching city by id. countryId={}", countryId, e);
+            throw new RuntimeException("Failed to fetch country by id", e);
+        }
     }
 
     public List<Country> findByName(String name) {
@@ -71,10 +72,9 @@ public class CountryRepository {
 
             return countryList;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOG.error("Database error while searching country by name. name={}", name, e);
+            throw new RuntimeException("Failed to search country by name", e);
         }
-
-        return null;
     }
 
     public long create(Country country) {
@@ -87,12 +87,17 @@ public class CountryRepository {
             int rows = statement.executeUpdate(query);
 
             if (rows == 0) {
-                throw new SQLException("Creating city failed, no rows affected.");
+                LOG.warn("Country creation affected no rows. countryName={}", country.getName());
+                throw new SQLException("Creating country failed, no rows affected.");
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
 
-        return id;
+            auditLogger.audit("Created country id=" + id + ", name=" + country.getName());
+            LOG.info("Country created successfully. id={}, name={}", id, country.getName());
+
+            return id;
+        } catch (SQLException e) {
+            LOG.error("Database error while creating country. countryName={}, countryId={}", country.getName(), country.getId(), e);
+            throw new RuntimeException("Failed to create country", e);
+        }
     }
 }

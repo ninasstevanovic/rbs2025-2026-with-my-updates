@@ -36,8 +36,13 @@ public class RoleRepository {
                 roles.add(new Role(id, name));
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-        }
+            LOG.error("Database error while fetching role(s) by user id. userId={}", userId, e);
+            throw new RuntimeException("Failed to fetch role(s) by user id", e);        }
         return roles;
+    }
+
+    public boolean isAdmin(int userId) {
+        return findByUserId(userId).stream()
+                .anyMatch(role -> role.getName().equals("ADMIN"));
     }
 }

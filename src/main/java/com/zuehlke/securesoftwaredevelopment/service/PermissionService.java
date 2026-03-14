@@ -25,12 +25,26 @@ public class PermissionService {
     }
 
     public List<Permission> get(int userId) {
-        List<Role> roles = roleRepository.findByUserId(userId);
-        List<Permission> userPermissions = new ArrayList<>();
-        for (Role role : roles) {
-            List<Permission> rolePermissions = permissionRepository.findByRoleId(role.getId());
-            userPermissions.addAll(rolePermissions);
+        try {
+            List<Role> roles = roleRepository.findByUserId(userId);
+            if (roles.isEmpty()) {
+                LOG.warn("No roles found for userId={}", userId);
+                return new ArrayList<>();
+            }
+
+            List<Permission> userPermissions = new ArrayList<>();
+            for (Role role : roles) {
+                List<Permission> rolePermissions = permissionRepository.findByRoleId(role.getId());
+                userPermissions.addAll(rolePermissions);
+            }
+
+            LOG.info("Permissions loaded for userId={}. rolesCount={}, permissionsCount={}",
+                    userId, roles.size(), userPermissions.size());
+
+            return userPermissions;
+        } catch (RuntimeException e) {
+            LOG.error("Unexpected error while loading permissions for userId={}", userId, e);
+            throw e;
         }
-        return userPermissions;
     }
 }

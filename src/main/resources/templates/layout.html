@@ -45,19 +45,20 @@
                 <a class="nav-link" th:href="@{/hotels}">Hotels</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/persons}">Users</a>
+                <a class="nav-link" th:href="@{/persons}" sec:authorize="hasAuthority('VIEW_PERSONS_LIST')">Users</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/reservations/view}">Reservations</a>
+                <a class="nav-link" th:href="@{/reservations/view}" sec:authorize="hasAuthority('VIEW_RESERVATION')">Reservations</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/new-country}">New Country</a>
+                <a class="nav-link" th:href="@{/new-country}" sec:authorize="hasAuthority('CREATE_COUNTRY')">New
+                    Country</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/new-city}">New City</a>
+                <a class="nav-link" th:href="@{/new-city}" sec:authorize="hasAuthority('CREATE_CITY')">New City</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" th:href="@{/hotels/new-hotel}">New Hotel</a>
+                <a class="nav-link" th:href="@{/hotels/new-hotel}" sec:authorize="hasAuthority('CREATE_HOTEL')">New Hotel</a>
             </li>
         </ul>
         <ul class="navbar-nav ml-auto">
