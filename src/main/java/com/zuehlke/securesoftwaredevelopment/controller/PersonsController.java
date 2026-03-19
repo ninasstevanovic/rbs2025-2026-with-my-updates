@@ -16,6 +16,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +40,7 @@ public class PersonsController {
     // treba da obezbedim da view profile- detalje user-a moze da vidi samo admin, ALI da ako dodjem na svoj profil onda mogu da ga vidim
     // tj ako je id moj id onda imam dozvolu
     @PreAuthorize("hasAuthority('VIEW_PERSON') or authentication.name == @userRepository.findUsername(#id)")
-    public String person(@PathVariable int id, Model model) {
+    public String person(@PathVariable int id, Model model, HttpSession session) {
         try {
             Person person = personRepository.get("" + id);
             String username = userRepository.findUsername(id);
@@ -49,6 +50,8 @@ public class PersonsController {
                 return "redirect:/persons?error=true";
             }
 
+            String csrf = session.getAttribute("CSRF_TOKEN").toString();
+            model.addAttribute("CSRF_TOKEN", csrf);
             model.addAttribute("person", person);
             model.addAttribute("username", username);
 
@@ -111,13 +114,18 @@ public class PersonsController {
     @PostMapping("/update-person")
     // treba da obezbedim da admin moze da update-uje bilo kog user-a, dok menadzer i cutomer mogu samo sebe
     @PreAuthorize("@personSecurityService.canUpdatePerson(#person.id, authentication)")
-    public String updatePerson(Person person, String username) {
+    public String updatePerson(Person person, String username, HttpSession session, @RequestParam("csrfToken") String csrfToken) {
         try {
             if (person == null || person.getId() == null) {
                 LOG.warn("Person update rejected because person or personId is missing");
                 return "redirect:/persons?error=true";
             }
 
+            String csrf = session.getAttribute("CSRF_TOKEN").toString();
+            if (!csrf.equals(csrfToken)) {
+                LOG.warn("Person update rejected because invalid csrf token");
+                return "redirect:/persons?error=true";
+            }
             Person oldPerson = personRepository.get(person.getId());
             String oldUsername = userRepository.findUsername(Integer.parseInt(person.getId()));
 
